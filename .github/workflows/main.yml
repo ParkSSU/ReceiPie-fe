@@ -1,0 +1,34 @@
+name: Push to Personal Repo for Vercel Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: pandoc/latex
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install mustache (Optional)
+        run: apk add ruby && gem install mustache
+
+      - name: Run build script
+        run: sh ./build.sh
+
+      - name: Push to Personal Repo
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.MY_TOKEN }}
+        with:
+          source-directory: 'output'
+          destination-github-username: sangil6372
+          destination-repository-name: ReciPie-fe
+          user-email: ${{ secrets.EMAIL }}
+          commit-message: ${{ github.event.commits[0].message }}
+          target-branch: main
+
+      - name: Debug pushed directory (Optional)
+        run: echo ${{ steps.push_directory.outputs.destination-cloned-directory }}
