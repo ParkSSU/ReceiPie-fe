@@ -25,7 +25,7 @@ jobs:
         with:
           source-directory: 'output'
           destination-github-username: sangil6372
-          destination-repository-name: ReciPie-fe
+          destination-repository-name: ReceiPie-fe
           user-email: ${{ secrets.EMAIL }}
           commit-message: ${{ github.event.commits[0].message }}
           target-branch: main
