@@ -2,11 +2,17 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 // 품목(Item) 타입 정의
+export interface Allocation {
+  user: string
+  count: number
+}
 export interface Item {
   name: string
   count: number
   price: number
-  buyers: string[] // 각 품목의 구매자
+  buyers: string[] // deprecated, allocations 사용
+  allocations?: Allocation[]
+  devideMode?: boolean // 분배 모드 여부
 }
 
 // 트랜잭션 정보 타입 정의
@@ -45,8 +51,11 @@ export const useTransactionStore = defineStore('transaction', () => {
   /**
    * 참여자 정보 설정
    */
-  const setBuyers = (newBuyers: string[]) => {
-    buyers.value = newBuyers
+  const setBuyers = (newBuyers: Allocation[][]) => {
+    // items의 allocations에 저장
+    items.value.forEach((item, idx) => {
+      item.allocations = newBuyers[idx]
+    })
   }
 
   /**
