@@ -18,26 +18,48 @@
           <td>{{ item.count }}개 ({{ item.price.toLocaleString() }}원)</td>
           <td>{{ (item.count * item.price).toLocaleString() }}원</td>
           <td>
-            <template v-if="item.count === 1 && !item.devideMode">
-              <div class="d-flex align-items-center">
-                <select
-                  v-model="item.allocations[0].user"
-                  class="form-select me-2"
-                  style="width: 120px"
+            <!-- 1개인 품목: 나누기 버튼, 분배 시 드롭다운 n개 -->
+            <template v-if="item.count === 1">
+              <div v-if="item.allocations.length === 1">
+                <div class="d-flex align-items-center">
+                  <select
+                    v-model="item.allocations[0].user"
+                    class="form-select me-2"
+                    style="width: 120px"
+                  >
+                    <option disabled value="">--선택--</option>
+                    <option v-for="(name, i) in userStore.names" :key="i" :value="name">
+                      {{ name }}
+                    </option>
+                  </select>
+                  <button
+                    class="btn btn-outline-secondary btn-sm ms-2"
+                    @click="splitSingleItem(index)"
+                  >
+                    더치페이
+                  </button>
+                </div>
+              </div>
+              <div v-else>
+                <div
+                  v-for="(alloc, allocIdx) in item.allocations"
+                  :key="allocIdx"
+                  class="d-flex align-items-center mb-2"
                 >
-                  <option disabled value="">--선택--</option>
-                  <option v-for="(name, i) in userStore.names" :key="i" :value="name">
-                    {{ name }}
-                  </option>
-                </select>
-                <button
-                  class="btn btn-outline-secondary btn-sm ms-2"
-                  @click="enableDevideMode(index)"
-                >
-                  분배
-                </button>
+                  <select
+                    v-model="item.allocations[allocIdx].user"
+                    class="form-select me-2"
+                    style="width: 120px"
+                  >
+                    <option disabled value="">--선택--</option>
+                    <option v-for="(name, i) in userStore.names" :key="i" :value="name">
+                      {{ name }}
+                    </option>
+                  </select>
+                </div>
               </div>
             </template>
+            <!-- 2개 이상 품목: 기존 분배 방식 -->
             <template v-else>
               <div
                 v-for="(alloc, allocIdx) in item.allocations"
@@ -56,8 +78,8 @@
                 </select>
                 <input
                   type="number"
-                  :min="0.01"
-                  :step="0.01"
+                  :min="1"
+                  :step="1"
                   :max="item.count - allocatedExcept(item, allocIdx)"
                   v-model.number="item.allocations[allocIdx].count"
                   class="form-control me-2"
@@ -108,38 +130,37 @@ interface Allocation {
   user: string
   count: number
 }
+
 interface ItemWithAllocations {
   name: string
   count: number
   price: number
   buyers: string[]
   allocations: Allocation[]
-  devideMode: boolean
 }
 
-// 초기화: 각 품목별로 allocations 배열 생성 (기본 1명, 전체 수량), devideMode 추가
 const itemsWithAllocations = reactive<ItemWithAllocations[]>(
   transactionStore.items.map((item) => ({
     ...item,
     allocations: [{ user: '', count: item.count }],
-    devideMode: false,
   })),
 )
 
-function enableDevideMode(itemIdx: number) {
+/*
+  TODO : Store 파일과 JSON 통일 및 상태 연동
+*/
+
+// 1개 품목 나누기: 인원수만큼 드롭다운 생성, count는 모두 1
+function splitSingleItem(itemIdx: number) {
   const item = itemsWithAllocations[itemIdx]
-  // 분배 인원 수 입력 (prompt 사용, 추후 모달로 개선 가능)
   let n = parseInt(prompt('몇 명으로 나누시겠습니까? (2 이상)', '2') || '2', 10)
   if (isNaN(n) || n < 2) n = 2
-  item.devideMode = true
-  // 1/n로 자동 분배 (소수점 3자리까지)
-  const base = Math.floor((item.count / n) * 1000) / 1000
-  const remain = item.count - base * (n - 1)
-  item.allocations = Array.from({ length: n }, (_, i) => ({
-    user: '',
-    count: i === n - 1 ? parseFloat(remain.toFixed(3)) : base,
-  }))
+  item.allocations = Array.from({ length: n }, () => ({ user: '', count: 1 }))
+
+  // TODO : 현재 취소해도 2명으로 Split 중 -> 취소 가능하도록 수정
+  // TODO : Split 이 된 상태에서 원래 상태로 돌아올 수 있도록 수정
 }
+// TODO : 결과 페이지에서 더치페이 고민
 
 function addAllocation(itemIdx: number) {
   const item = itemsWithAllocations[itemIdx]
@@ -163,7 +184,6 @@ function allocatedExcept(item: ItemWithAllocations, exceptIdx: number) {
 }
 
 const handleSave = () => {
-  // 저장 시 allocations만 추출해서 store에 저장
   const buyers = itemsWithAllocations.map((item) => item.allocations)
   transactionStore.setBuyers(buyers)
   router.push('/result')

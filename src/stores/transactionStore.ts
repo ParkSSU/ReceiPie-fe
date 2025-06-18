@@ -62,6 +62,7 @@ export const useTransactionStore = defineStore('transaction', () => {
    * TODO: 유저 ID 기반으로 서버에서 영수증 데이터를 불러오기
    * 예: GET /api/receipts/:userId
    */
+
   // const fetchTransactionData = async () => {
   // TODO: axios 요청 구현
   // const response = await axios.get()
