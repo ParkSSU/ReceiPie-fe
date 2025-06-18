@@ -11,7 +11,7 @@ const kakaoLogin = () => {
     'https://kauth.kakao.com/oauth/authorize' +
     '?response_type=code' +
     '&client_id=91db8a45225f8bfff3cd28705d98e385' +
-    '&redirect_uri=http://localhost:5173/oauth/callback'
+    '&redirect_uri=http://3.38.102.232:8080/api/oauth/kakao/callback'
 
   window.location.href = kakaoUrl
 }

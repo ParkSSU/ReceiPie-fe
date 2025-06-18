@@ -16,17 +16,27 @@ onMounted(async () => {
   const code = route.query.code
 
   try {
-    const res = await axios.get(`/oauth/kakao/callback?code=${code}`)
-    const token = res.data.accessToken
-    const nickname = res.data.nickname // 백엔드에서 같이 넘긴다면
+    if (!code || typeof code !== 'string') {
+      throw new Error('카카오 인가 코드 누락')
+    }
 
-    // 저장 방식 선택: localStorage + Pinia
-    localStorage.setItem('accessToken', token)
+    console.log('카카오 인가 코드:', code)
+
+    const res = await axios.get(`http://3.38.102.232:8080/api/oauth/kakao/callback?code=${code}`)
+
+    console.log('카카오 응답 데이터:', res.data)
+
+    const token = res.data.token || res.data.accessToken
+    const nickname = res.data.nickname || '사용자'
+
+    if (!token) {
+      throw new Error('accessToken 누락됨')
+    }
     userStore.setUser({ nickname, token })
 
-    router.push('/') // 홈 페이지로 이동
+    router.push('/')
   } catch (e) {
-    console.error('OAuth 로그인 실패', e)
+    console.error('OAuth 로그인 실패:', e)
     router.push('/login')
   }
 })
