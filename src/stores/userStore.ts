@@ -1,17 +1,34 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+interface User {
+  nickname: string
+  token: string
+}
+
 export const useUserStore = defineStore('user', () => {
-  const peopleCount = ref<number>(0)
-  const names = ref<string[]>([])
+  const nickname = ref<string | null>(null)
+  const token = ref<string | null>(null)
 
-  const setPeopleCount = (count: number) => {
-    peopleCount.value = count
+  // 로그인 성공 시 사용자 정보 저장 + 토큰 localStorage 저장
+  const setUser = (user: User) => {
+    nickname.value = user.nickname
+    token.value = user.token
+    localStorage.setItem('accessToken', user.token)
   }
 
-  const setNames = (newNames: string[]) => {
-    names.value = newNames
+  // 로그아웃: 상태 초기화 + 토큰 제거
+  const logout = () => {
+    nickname.value = null
+    token.value = null
+    localStorage.removeItem('accessToken')
   }
 
-  return { peopleCount, names, setPeopleCount, setNames }
+  // store에서 사용할 속성과 함수들을 return
+  return {
+    nickname,
+    token,
+    setUser,
+    logout,
+  }
 })
